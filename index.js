@@ -1,4 +1,6 @@
 import { AppRegistry } from 'react-native';
-import Toolbar from "./app/components/Toolbar/Toolbar";
+import App from './App';
 
-AppRegistry.registerComponent('Toolbar', () => Toolbar);
+
+
+AppRegistry.registerComponent('itemLister', () => App);
