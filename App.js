@@ -7,15 +7,15 @@
 import React, {Component} from 'react';
 import {
     AppRegistry,
-    Platform,
-    StyleSheet,
+    TextInput,
     Text,
     View,
     ListView,
-    TouchableHighlight
-
+    TouchableHighlight,
+    Modal
 } from 'react-native';
 import Toolbar from './app/components/Toolbar/Toolbar';
+import AddButton from './app/components/AddButton/AddButton';
 import * as firebase from 'firebase';
 const style = require('./app/style');
 const config = {
@@ -34,11 +34,16 @@ export default class App extends Component<Props> {
         super();
         let ds = new ListView.DataSource({rowHasChanged: (r1,r2) => r1 !== r2});
         this.state = {
-            itemDataSource: ds
+            text: '',
+            itemDataSource: ds,
+            modalVisible: false,
         };
         this.itemsRef = this.getRef().child('items');
         this.renderRow = this.renderRow.bind(this);
         this.pressRow = this.pressRow.bind(this)
+    }
+    setModalVisible(visible) {
+        this.setState({modalVisible: visible});
     }
     getRef() {
         return firebase.database().ref();
@@ -54,7 +59,7 @@ export default class App extends Component<Props> {
             let items = [];
             snap.forEach((child) =>{
                 items.push({
-                    title: child.val(),
+                    title: child.val().title,
                     _key: child.key
                 })
             });
@@ -64,7 +69,7 @@ export default class App extends Component<Props> {
         }));
     }
     pressRow(item){
-        console.log(item)
+        this.itemsRef.child(item._key).remove();
     }
     renderRow(item){
         return (
@@ -77,17 +82,53 @@ export default class App extends Component<Props> {
             </TouchableHighlight>
         )
     }
+    addItem(){
+          this.setModalVisible(true);
+    }
     render() {
         return (
             <View style={style.container}>
+                <Modal
+                    animationType="slide"
+                    transparent={false}
+                    visible={this.state.modalVisible}
+                    onRequestClose={() => {}}>
+                    <View style={{marginTop: 22}}>
+                        <View>
+                            <Toolbar title='Add Item'/>
+                            <TextInput
+                            value={this.state.text}
+                            placeholder='Add Item'
+                            onChangeText = {(value) => this.setState({text:value})}
+                            />
+
+                            <TouchableHighlight
+                                onPress={() => {
+                                    this.itemsRef.push({title:this.state.text});
+                                    this.setState({text: ''});
+                                    this.setModalVisible(!this.state.modalVisible);
+                                }}>
+                                <Text>Save Item</Text>
+                            </TouchableHighlight>
+                            <TouchableHighlight
+                                onPress={() => {
+                                    this.setModalVisible(!this.state.modalVisible);
+                                }}>
+                                <Text>Cancel</Text>
+                            </TouchableHighlight>
+                        </View>
+                    </View>
+                </Modal>
                 <Toolbar title='itemLister'/>
                 <ListView
                 dataSource = {this.state.itemDataSource}
                 renderRow = {this.renderRow}
                 />
+                <AddButton onPress={this.addItem.bind(this)} title='Add Item'/>
             </View>
         );
     }
 }
 
 AppRegistry.registerComponent('Toolbar', () => Toolbar);
+AppRegistry.registerComponent('AddButton', () => AddButton);
